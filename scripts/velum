@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if (( $# > 1 )); then
+    printf 'Expected one option; use --help.\n' >&2
+    exit 2
+fi
+case "${1:---preview}" in
+    --preview) export VELUM_MODE=preview ;;
+    --bar) export VELUM_MODE=bar ;;
+    --help|-h)
+        printf 'Usage: %s [--preview|--bar]\n\n--preview  Open a standalone design preview (default).\n--bar      Start the live Hyprland top bar; Ctrl+C stops it.\n' "$0"
+        exit 0 ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
+esac
+command -v qs >/dev/null || { printf 'Quickshell (qs) is required.\n' >&2; exit 1; }
+if [[ "$VELUM_MODE" == bar && -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    printf 'Live bar mode requires a running Hyprland session.\n' >&2
+    exit 1
+fi
+exec qs -p "$repo_dir/quickshell/shell.qml"

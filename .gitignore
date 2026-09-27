@@ -1,0 +1,11 @@
+.DS_Store
+*.log
+*.bak*
+*.qmlc
+__pycache__/
+.cache/
+.env
+.env.*
+!.env.example
+local/
+screenshots/

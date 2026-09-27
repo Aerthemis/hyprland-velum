@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+bash -n "$repo_dir/scripts/velum" "$repo_dir/scripts/check"
+qmlformat_bin="${QMLFORMAT:-/usr/lib/qt6/bin/qmlformat}"
+command -v "$qmlformat_bin" >/dev/null || { printf 'Qt 6 qmlformat is required (Arch: qt6-declarative). Override its path with QMLFORMAT.\n' >&2; exit 1; }
+while IFS= read -r -d '' file; do
+    "$qmlformat_bin" "$file" >/dev/null
+done < <(find "$repo_dir/quickshell" -name '*.qml' -print0)
+printf 'Shell and QML syntax checks passed.\n'
