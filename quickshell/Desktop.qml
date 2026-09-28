@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Hyprland
 import "components"
 import "theme"
@@ -15,8 +16,9 @@ Scope {
             screen: modelData
             property var monitor: Hyprland.monitorFor(screen)
             property bool appearanceOpen: false
+            property bool dashboardOpen: false
             anchors { top: true; left: true; right: true }
-            margins { top: 10; left: 12; right: 12 }
+            margins { top: 0; left: 0; right: 0 }
             implicitHeight: Theme.barHeight
             color: "transparent"
             Bar {
@@ -32,11 +34,29 @@ Scope {
                 timeText: Qt.formatDateTime(clock.date, "HH:mm")
                 dateText: Qt.formatDateTime(clock.date, "ddd, d MMM")
                 appearanceOpen: panel.appearanceOpen
+                dashboardOpen: panel.dashboardOpen
                 onWorkspaceRequested: workspace => {
                     Hyprland.dispatch("focusmonitor " + panel.screen.name);
                     Hyprland.dispatch("workspace " + workspace);
                 }
-                onAppearanceRequested: panel.appearanceOpen = !panel.appearanceOpen
+                onAppearanceRequested: { panel.dashboardOpen = false; panel.appearanceOpen = !panel.appearanceOpen; }
+                onDashboardRequested: { panel.appearanceOpen = false; panel.dashboardOpen = !panel.dashboardOpen; }
+            }
+            PanelWindow {
+                id: dashboardWindow
+                screen: panel.screen
+                visible: panel.dashboardOpen
+                anchors { top: true; bottom: true; left: true; right: true }
+                exclusionMode: ExclusionMode.Ignore
+                exclusiveZone: 0
+                color: "transparent"
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: panel.dashboardOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+                DashboardOverlay {
+                    anchors.fill: parent
+                    open: panel.dashboardOpen
+                    onCloseRequested: panel.dashboardOpen = false
+                }
             }
             PopupWindow {
                 anchor.window: panel

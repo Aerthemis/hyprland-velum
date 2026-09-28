@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+export VELUM_ROOT="$repo_dir"
 if (( $# > 1 )); then
     printf 'Expected one option; use --help.\n' >&2
     exit 2

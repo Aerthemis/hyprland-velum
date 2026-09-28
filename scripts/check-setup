@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+bash -n "$repo_dir/scripts/setup-fish" "$repo_dir/scripts/setup-nvim" "$repo_dir/scripts/lib/setup.sh" "$repo_dir/scripts/check-setup"
+fish -n "$repo_dir/config/fish/60-velum.fish"
+nvim --headless -u NONE -i NONE -n -l "$repo_dir/tests/check-config.lua" "$repo_dir/config/nvim"
+python3 "$repo_dir/tests/test_setup.py"
+printf 'Offline setup checks passed. A clean Arch VM test is still required.\n'

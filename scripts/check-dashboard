@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+python3 "$repo_dir/tests/dashboard/test_data.py"
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+    /usr/lib/qt6/bin/qmltestrunner -input "$repo_dir/tests/dashboard" -import "$repo_dir/quickshell"
+python3 "$repo_dir/tests/dashboard/smoke.py"

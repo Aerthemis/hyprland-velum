@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+component=fish
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/setup.sh"
+parse_args "$@"
+add_file "$repo_dir/config/fish/60-velum.fish" /etc/fish/conf.d/60-velum.fish
+add_file "$repo_dir/config/starship.toml" /etc/starship-velum.toml
+add_file "$repo_dir/config/kitty/kitty.conf" /etc/xdg/kitty/kitty.conf
+preflight
+packages
+run fish -n "$repo_dir/config/fish/60-velum.fish"
+install_files
+if "$set_shell"; then run chsh -s /usr/bin/fish "$target_user"; fi
+if "$root_shell"; then run chsh -s /usr/bin/fish root; fi
+printf 'Fish/Kitty setup complete%s. Personal configurations remain untouched.\n' "$("$dry_run" && printf ' (dry run)')"

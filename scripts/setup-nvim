@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+component=nvim
+source "$(dirname -- "${BASH_SOURCE[0]}")/lib/setup.sh"
+parse_args "$@"
+add_tree "$repo_dir/config/nvim" /etc/xdg/nvim
+preflight
+packages
+install_files
+if "$with_powershell"; then
+    # dotnet tool update installs when absent and updates when already present.
+    as_user dotnet tool update --tool-path "$target_home/.local/share/velum/tools" PowerShell
+fi
+if "$bootstrap"; then
+    if [[ -f "$target_home/.config/nvim/init.lua" || -f "$target_home/.config/nvim/init.vim" ]]; then
+        printf 'Personal Neovim config found for %s; leaving it and its plugins untouched.\n' "$target_user"
+        printf 'Use a fresh account in the VM to test the shared defaults.\n'
+    else
+        as_user env VELUM_BOOTSTRAP=plugins nvim --headless -i NONE -n \
+            -u /etc/xdg/nvim/init.lua \
+            -c 'lua dofile("/etc/xdg/nvim/bootstrap.lua")'
+        as_user env VELUM_BOOTSTRAP=tools nvim --headless -i NONE -n \
+            -u /etc/xdg/nvim/init.lua \
+            -c 'lua dofile("/etc/xdg/nvim/bootstrap.lua")'
+    fi
+fi
+printf 'Neovim setup complete%s. See docs/installation.md for verification.\n' "$("$dry_run" && printf ' (dry run)')"

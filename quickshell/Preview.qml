@@ -9,13 +9,14 @@ ApplicationWindow {
     id: root
     title: "Velum — preview"
     visible: true
-    width: 1120
+    width: Number(Quickshell.env("VELUM_PREVIEW_WIDTH") || 1120)
     height: 720
     minimumWidth: 640
     minimumHeight: 460
     color: Theme.background
     property int workspace: 1
-    property bool appearanceOpen: true
+    property bool appearanceOpen: !dashboardOpen
+    property bool dashboardOpen: Quickshell.env("VELUM_CAPTURE_DASHBOARD") === "1"
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
@@ -23,7 +24,7 @@ ApplicationWindow {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: root.appearanceOpen = false
+        onActivated: { root.appearanceOpen = false; root.dashboardOpen = false; }
     }
     Shortcut {
         sequence: "Ctrl+Q"
@@ -78,7 +79,7 @@ ApplicationWindow {
                 top: parent.top
                 left: parent.left
                 right: parent.right
-                margins: 16
+                margins: 0
             }
             height: Theme.barHeight
             activeWorkspace: root.workspace
@@ -86,8 +87,10 @@ ApplicationWindow {
             timeText: Qt.formatDateTime(clock.date, "HH:mm")
             dateText: Qt.formatDateTime(clock.date, "ddd, d MMM")
             appearanceOpen: root.appearanceOpen
+            dashboardOpen: root.dashboardOpen
             onWorkspaceRequested: workspace => root.workspace = workspace
-            onAppearanceRequested: root.appearanceOpen = !root.appearanceOpen
+            onAppearanceRequested: { root.dashboardOpen = false; root.appearanceOpen = !root.appearanceOpen; }
+            onDashboardRequested: { root.appearanceOpen = false; root.dashboardOpen = !root.dashboardOpen; }
         }
         AppearanceCard {
             id: card
@@ -138,9 +141,16 @@ ApplicationWindow {
             }
         }
     }
+    DashboardOverlay {
+        parent: scene
+        anchors.fill: parent
+        open: root.dashboardOpen
+        panel.tab: Number(Quickshell.env("VELUM_CAPTURE_TAB") || 0)
+        onCloseRequested: root.dashboardOpen = false
+    }
     // Optional development capture, never enabled during ordinary use.
     Timer {
-        interval: 1200
+        interval: 3200
         running: Quickshell.env("VELUM_CAPTURE") !== ""
         onTriggered: scene.grabToImage(result => {
             const saved = result.saveToFile(Quickshell.env("VELUM_CAPTURE"));

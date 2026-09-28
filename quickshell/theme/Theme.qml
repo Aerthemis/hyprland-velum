@@ -15,7 +15,8 @@ QtObject {
     readonly property color ink: "#30223f"
     readonly property string font: "Google Sans Flex"
     readonly property string displayFont: "Space Grotesk"
-    readonly property int barHeight: 52
+    readonly property string barFont: "JetBrainsMono Nerd Font"
+    readonly property int barHeight: 34
     readonly property int radius: 20
     readonly property int motion: 180
 }

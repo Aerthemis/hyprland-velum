@@ -1,0 +1,6 @@
+fish
+starship
+eza
+kitty
+neovim
+ttf-jetbrains-mono-nerd

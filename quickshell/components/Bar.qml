@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme"
 
@@ -12,84 +13,131 @@ Rectangle {
     property string timeText: ""
     property string dateText: ""
     property bool appearanceOpen: false
+    property bool dashboardOpen: false
     signal workspaceRequested(int workspace)
     signal appearanceRequested()
+    signal dashboardRequested()
     implicitHeight: Theme.barHeight
-    radius: Theme.radius
-    color: Theme.surface
-    border.color: Theme.line
-    border.width: 1
+    color: Theme.background
     Behavior on color { ColorAnimation { duration: Theme.motion } }
 
+    Rectangle {
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+        height: 1
+        color: Theme.line
+        opacity: 0.5
+    }
+
     RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: 15
-        anchors.rightMargin: 10
-        spacing: 12
-        VelumMark { Layout.preferredWidth: 24; Layout.preferredHeight: 24 }
-        Text {
-            visible: root.width > 760
-            text: "velum"
-            color: Theme.text
-            font.family: Theme.displayFont
-            font.pixelSize: 17
-            font.weight: Font.Medium
-        }
-        Rectangle { implicitWidth: 1; implicitHeight: 18; color: Theme.line }
+        id: leftSection
+        anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+        spacing: 10
+        VelumMark { Layout.preferredWidth: 18; Layout.preferredHeight: 18 }
         RowLayout {
-            spacing: 3
+            spacing: 2
             Repeater {
                 model: root.workspaceIds
-                delegate: SoftButton {
+                delegate: Button {
+                    id: workspaceButton
                     required property int modelData
-                    text: modelData.toString().padStart(2, "0")
-                    hint: "Workspace " + modelData
-                    selected: root.activeWorkspace === modelData
-                    implicitWidth: selected ? 44 : 34
+                    readonly property bool selected: root.activeWorkspace === modelData
+                    readonly property bool occupied: root.occupiedWorkspaces.includes(modelData)
+                    implicitWidth: 26
+                    implicitHeight: 28
+                    hoverEnabled: true
+                    focusPolicy: Qt.StrongFocus
+                    Accessible.name: "Workspace " + modelData
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Workspace " + modelData
+                    ToolTip.delay: 700
                     onClicked: root.workspaceRequested(modelData)
-                    Behavior on implicitWidth { NumberAnimation { duration: Theme.motion; easing.type: Easing.OutCubic } }
-                    Rectangle {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 3
-                        width: 3; height: 3; radius: 2
-                        color: Theme.muted
-                        visible: !parent.selected && root.occupiedWorkspaces.includes(parent.modelData)
+                    contentItem: Text {
+                        text: workspaceButton.modelData
+                        font.family: Theme.barFont
+                        font.pixelSize: 12
+                        font.bold: false
+                        color: workspaceButton.selected ? Theme.accent : (workspaceButton.occupied ? Theme.text : Theme.muted)
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: 4
+                        color: workspaceButton.hovered || workspaceButton.down ? Theme.raised : "transparent"
+                        border.width: workspaceButton.activeFocus ? 1 : 0
+                        border.color: Theme.accent
+                        Rectangle {
+                            anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
+                            width: workspaceButton.selected ? 14 : 3
+                            height: 2
+                            radius: 1
+                            color: workspaceButton.selected ? Theme.accent : Theme.muted
+                            visible: workspaceButton.selected || workspaceButton.occupied
+                        }
                     }
                 }
             }
         }
-        Text {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            text: root.width > 900 ? root.windowTitle : ""
-            color: Theme.muted
-            elide: Text.ElideRight
-            font.family: Theme.font
-            font.pixelSize: 12
-        }
-        Text {
-            visible: root.width > 700
-            text: root.dateText
-            color: Theme.muted
-            font.family: Theme.font
-            font.pixelSize: 12
-        }
-        Text {
+    }
+
+    // Keep the clock at the screen center, independent of side content.
+    Button {
+        id: clockLabel
+        anchors.centerIn: parent
+        implicitWidth: clockText.implicitWidth + 16
+        implicitHeight: 28
+        hoverEnabled: true
+        focusPolicy: Qt.StrongFocus
+        Accessible.name: "Open dashboard, " + root.timeText
+        ToolTip.visible: hovered
+        ToolTip.text: "Calendar, media, performance and weather"
+        ToolTip.delay: 700
+        onClicked: root.dashboardRequested()
+        contentItem: Text {
+            id: clockText
             text: root.timeText
-            color: Theme.text
-            font.family: Theme.displayFont
-            font.pixelSize: 15
-            font.weight: Font.Medium
+            color: root.dashboardOpen ? Theme.accent : Theme.text
+            font.family: Theme.barFont
+            font.pixelSize: 12
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
         }
-        Rectangle { implicitWidth: 1; implicitHeight: 18; color: Theme.line }
-        SoftButton {
-            text: Theme.light ? "◐" : "◑"
+        background: Rectangle {
+            radius: 4
+            color: clockLabel.hovered || root.dashboardOpen ? Theme.raised : "transparent"
+            border.width: clockLabel.activeFocus ? 1 : 0
+            border.color: Theme.accent
+        }
+    }
+    Text {
+        anchors { right: clockLabel.left; rightMargin: 12; verticalCenter: parent.verticalCenter }
+        visible: x > leftSection.x + leftSection.width + 24
+        text: root.dateText
+        color: Theme.muted
+        font.family: Theme.barFont
+        font.pixelSize: 12
+    }
+    Text {
+        anchors { left: leftSection.right; leftMargin: 18; verticalCenter: parent.verticalCenter }
+        width: Math.max(0, root.width / 2 - x - 165)
+        visible: root.width > 1000
+        text: root.windowTitle
+        elide: Text.ElideRight
+        color: Theme.muted
+        font.family: Theme.barFont
+        font.pixelSize: 12
+    }
+    RowLayout {
+        anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+        spacing: 6
+        IconButton {
+            // Nerd Font weather-night / weather-sunny: matches Omarchy’s nightlight icon.
+            glyph: "󰔎"
             hint: "Switch light / dark appearance"
             onClicked: Theme.light = !Theme.light
         }
-        SoftButton {
-            text: "•••"
+        IconButton {
+            // Nerd Font palette: Omarchy’s Theme menu glyph.
+            glyph: "󰸌"
             hint: "Open appearance"
             selected: root.appearanceOpen
             onClicked: root.appearanceRequested()
