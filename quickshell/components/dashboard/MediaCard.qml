@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import ".."
 import "../../theme"
 
@@ -13,8 +14,11 @@ ColumnLayout {
     property string selectedPlayer: ""
     property var players: Mpris.players.values
     readonly property var player: players.find(p => p.dbusName === selectedPlayer) || players.find(p => p.isPlaying) || players[0] || null
+    readonly property PwNode audioSink: Pipewire.defaultAudioSink
+    readonly property bool audioAvailable: !!audioSink && audioSink.ready && !!audioSink.audio
     property real position: 0
     spacing: 14
+    PwObjectTracker { objects: root.audioSink ? [root.audioSink] : [] }
     function duration(seconds) {
         const n = Math.max(0, Math.floor(seconds));
         return Math.floor(n / 60) + ":" + (n % 60).toString().padStart(2, "0");
@@ -67,6 +71,25 @@ ColumnLayout {
         text: root.player ? (root.player.trackArtist || root.player.identity) : "Play something in a music app or browser."
         wrapMode: Text.WordWrap; color: Theme.muted; font.family: Theme.font; font.pixelSize: 12
     }
+    RowLayout {
+        visible: !root.compact
+        Layout.fillWidth: true
+        Text { text: "System volume"; color: Theme.muted; font.family: Theme.font; font.pixelSize: 12 }
+        Slider {
+            Layout.fillWidth: true
+            from: 0; to: 1
+            value: Math.min(1, root.audioSink?.audio?.volume ?? 0)
+            enabled: root.audioAvailable
+            Accessible.name: "System output volume"
+            onMoved: if (root.audioAvailable) root.audioSink.audio.volume = value
+        }
+        IconButton {
+            glyph: root.audioSink?.audio?.muted ? "󰖁" : "󰕾"
+            hint: root.audioSink?.audio?.muted ? "Unmute system output" : "Mute system output"
+            enabled: root.audioAvailable
+            onClicked: root.audioSink.audio.muted = !root.audioSink.audio.muted
+        }
+    }
     Slider {
         Layout.fillWidth: true
         visible: !root.compact && !!root.player?.lengthSupported && !!root.player?.positionSupported
@@ -91,7 +114,7 @@ ColumnLayout {
     RowLayout {
         visible: !root.compact && !!root.player?.volumeSupported
         Layout.fillWidth: true
-        Text { text: "Volume"; color: Theme.muted; font.family: Theme.font; font.pixelSize: 12 }
+        Text { text: "Player volume"; color: Theme.muted; font.family: Theme.font; font.pixelSize: 12 }
         Slider {
             Layout.fillWidth: true
             from: 0; to: 1; value: root.player?.volume ?? 0

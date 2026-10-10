@@ -20,10 +20,11 @@ and Space Grotesk are optional fonts; Qt uses available fallbacks.
 ```
 
 This opens a normal window. It does not install files, edit Hyprland, or stop
-your existing shell. Click the workspace numbers, switch light/dark mode, and
-open the **palette icon** to try Iris, Sage and Clay accents. Click the clock to
-open the dashboard. Workspace selection in this preview is simulated; the clock,
-system readings and media players are live. Escape closes an open panel;
+your existing shell. The left mark displays the detected Linux distribution
+logo (falling back to Velum's V mark if detection is unavailable); workspace
+markers switch workspaces. Click the clock to open the dashboard. Workspace
+selection in this preview is simulated; the clock,
+system readings and media players are live. Escape closes an open menu or panel;
 Ctrl+Q or the window close button exits.
 
 ## Try the live bar
@@ -38,7 +39,7 @@ Live mode adds a top bar to each connected monitor, with real workspace
 switching, occupied-workspace indicators, the focused window title, date and
 time. It runs alongside an existing bar, so the two may compete for space.
 Press Ctrl+C in the launching terminal to stop Velum. Nothing is added to
-autostart. The appearance panel's **×** button closes it.
+autostart.
 
 ## Clock dashboard
 
@@ -50,7 +51,8 @@ with Velum components. Close it with **Escape**, **×**, or a click outside.
 - **Overview:** large clock, local forecast summary, month calendar, CPU/memory
   readings and media controls. Browse months, select a date, or return to Today.
 - **Media:** select an MPRIS player, play/pause, skip tracks, seek and adjust
-  that player's volume. Controls are enabled only when the player supports them.
+  the PipeWire system output volume. A separate player-volume slider appears
+  when the selected MPRIS player supports it.
 - **Performance:** CPU history, memory/swap, disk usage, network transfer rates,
   uptime/load and available Linux thermal sensors. Metrics sample every two
   seconds while the dashboard is open.
@@ -69,9 +71,20 @@ The calendar is a date browser, without appointments or account integration.
 GPU metrics and per-process monitoring are not implemented. Small windows stack
 the overview cards vertically; scroll inside the dashboard to reach them.
 
-Theme choices are currently session-only. This first milestone does not provide
-a launcher, tray, notifications, audio/network controls, locking, or display
-settings. Keep your existing desktop services running.
+The bar's right side opens controls for Bluetooth, Wi-Fi, audio, displays and
+power. Live tray-app icons expand beside the controls as apps register.
+The network icon reflects Wi-Fi signal or a connected Ethernet cable; its panel
+lists visible networks and connects to open networks, saved profiles, or
+password-protected Wi-Fi. Enterprise Wi-Fi needs a configured profile. These
+use the existing BlueZ, NetworkManager, PipeWire/WirePlumber,
+Hyprland and brightnessctl services; Wi-Fi connects to saved profiles or open
+networks. Bluetooth controls also need Arch's `bluez-utils` package
+(`bluetoothctl`) and the `bluetooth.service` running.
+The Power panel includes battery and available power profiles, plus confirmed
+lock, suspend, log out, restart and power-off actions. Power profiles appear
+when power-profiles-daemon is installed. Missing services show as unavailable.
+The system-control helper is `scripts/system/control.py`. Omarchy's optional
+agent-activity indicator is omitted until Velum can detect active agents reliably.
 
 ## Project layout
 

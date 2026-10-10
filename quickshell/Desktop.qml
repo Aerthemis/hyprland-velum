@@ -4,6 +4,8 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import "components"
+import "components/system"
+import "services"
 import "theme"
 
 Scope {
@@ -15,8 +17,28 @@ Scope {
             required property var modelData
             screen: modelData
             property var monitor: Hyprland.monitorFor(screen)
-            property bool appearanceOpen: false
             property bool dashboardOpen: false
+            property string systemPage: ""
+            SystemControls { id: controls; page: panel.systemPage }
+            HyprlandFocusGrab {
+                id: popupFocusGrab
+                active: panel.dashboardOpen || panel.systemPage.length > 0
+                windows: [panel, dashboardWindow, systemPopup]
+                onCleared: {
+                    panel.dashboardOpen = false;
+                    panel.systemPage = "";
+                }
+            }
+            Connections {
+                target: Hyprland
+                function onRawEvent(event) {
+                    if ((panel.dashboardOpen || panel.systemPage.length > 0)
+                            && (event.name === "activewindow" || event.name === "activewindowv2")) {
+                        panel.dashboardOpen = false;
+                        panel.systemPage = "";
+                    }
+                }
+            }
             anchors { top: true; left: true; right: true }
             margins { top: 0; left: 0; right: 0 }
             implicitHeight: Theme.barHeight
@@ -33,14 +55,15 @@ Scope {
                 windowTitle: Hyprland.activeToplevel?.title ?? ""
                 timeText: Qt.formatDateTime(clock.date, "HH:mm")
                 dateText: Qt.formatDateTime(clock.date, "ddd, d MMM")
-                appearanceOpen: panel.appearanceOpen
                 dashboardOpen: panel.dashboardOpen
+                systemPage: panel.systemPage
+                systemStatus: controls.view
                 onWorkspaceRequested: workspace => {
                     Hyprland.dispatch("focusmonitor " + panel.screen.name);
                     Hyprland.dispatch("workspace " + workspace);
                 }
-                onAppearanceRequested: { panel.dashboardOpen = false; panel.appearanceOpen = !panel.appearanceOpen; }
-                onDashboardRequested: { panel.appearanceOpen = false; panel.dashboardOpen = !panel.dashboardOpen; }
+                onDashboardRequested: { panel.dashboardOpen = !panel.dashboardOpen; }
+                onSystemRequested: page => { panel.dashboardOpen = false; panel.systemPage = panel.systemPage === page ? "" : page; }
             }
             PanelWindow {
                 id: dashboardWindow
@@ -59,17 +82,23 @@ Scope {
                 }
             }
             PopupWindow {
+                id: systemPopup
                 anchor.window: panel
-                anchor.rect.x: Math.max(0, panel.width - width)
+                anchor.rect.x: Math.max(0, panel.width - width - 8)
                 anchor.rect.y: panel.height + 10
-                implicitWidth: 310
-                implicitHeight: appearance.implicitHeight
-                visible: panel.appearanceOpen
+                implicitWidth: 330
+                implicitHeight: systemCard.implicitHeight
+                visible: panel.systemPage.length > 0
                 color: "transparent"
-                AppearanceCard {
-                    id: appearance
+                SystemControlCard {
+                    id: systemCard
                     anchors.fill: parent
-                    onCloseRequested: panel.appearanceOpen = false
+                    page: panel.systemPage
+                    status: controls.view
+                    error: controls.error
+                    busy: controls.busy
+                    onActionRequested: (action, values) => action === "refresh" ? controls.refresh() : controls.act(action, values)
+                    onCloseRequested: panel.systemPage = ""
                 }
             }
         }

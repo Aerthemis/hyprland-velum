@@ -3,6 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import "components"
+import "components/system"
+import "services"
 import "theme"
 
 ApplicationWindow {
@@ -15,8 +17,9 @@ ApplicationWindow {
     minimumHeight: 460
     color: Theme.background
     property int workspace: 1
-    property bool appearanceOpen: !dashboardOpen
     property bool dashboardOpen: Quickshell.env("VELUM_CAPTURE_DASHBOARD") === "1"
+    property string systemPage: ""
+    SystemControls { id: controls; page: root.systemPage }
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
@@ -24,13 +27,19 @@ ApplicationWindow {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: { root.appearanceOpen = false; root.dashboardOpen = false; }
+        onActivated: { root.dashboardOpen = false; root.systemPage = ""; }
     }
     Shortcut {
         sequence: "Ctrl+Q"
         onActivated: Qt.quit()
     }
     onClosing: Qt.quit()
+    onActiveChanged: {
+        if (!active) {
+            root.dashboardOpen = false;
+            root.systemPage = "";
+        }
+    }
 
     Item {
         id: scene
@@ -86,34 +95,42 @@ ApplicationWindow {
             occupiedWorkspaces: [1, 3]
             timeText: Qt.formatDateTime(clock.date, "HH:mm")
             dateText: Qt.formatDateTime(clock.date, "ddd, d MMM")
-            appearanceOpen: root.appearanceOpen
             dashboardOpen: root.dashboardOpen
+            systemPage: root.systemPage
+            systemStatus: controls.view
             onWorkspaceRequested: workspace => root.workspace = workspace
-            onAppearanceRequested: { root.dashboardOpen = false; root.appearanceOpen = !root.appearanceOpen; }
-            onDashboardRequested: { root.appearanceOpen = false; root.dashboardOpen = !root.dashboardOpen; }
+            onDashboardRequested: { root.dashboardOpen = !root.dashboardOpen; }
+            onSystemRequested: page => { root.dashboardOpen = false; root.systemPage = root.systemPage === page ? "" : page; }
         }
-        AppearanceCard {
-            id: card
+        MouseArea {
+            anchors { fill: parent; topMargin: Theme.barHeight }
+            z: 1
+            visible: root.systemPage.length > 0
+            enabled: visible
+            onClicked: {
+                root.dashboardOpen = false;
+                root.systemPage = "";
+            }
+        }
+        SystemControlCard {
+            id: systemCard
+            z: 2
             anchors.right: parent.right
             anchors.rightMargin: 16
-            y: bar.y + bar.height + 12 + (root.appearanceOpen ? 0 : -8)
-            width: Math.min(310, root.width - 32)
+            y: bar.y + bar.height + 12 + (root.systemPage.length ? 0 : -8)
+            width: Math.min(330, root.width - 32)
             height: implicitHeight
-            opacity: root.appearanceOpen ? 1 : 0
+            page: root.systemPage
+            status: controls.view
+            error: controls.error
+            busy: controls.busy
+            opacity: root.systemPage.length ? 1 : 0
             visible: opacity > 0
-            enabled: root.appearanceOpen
-            onCloseRequested: root.appearanceOpen = false
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.motion
-                }
-            }
-            Behavior on y {
-                NumberAnimation {
-                    duration: Theme.motion
-                    easing.type: Easing.OutCubic
-                }
-            }
+            enabled: root.systemPage.length > 0
+            onActionRequested: (action, values) => action === "refresh" ? controls.refresh() : controls.act(action, values)
+            onCloseRequested: root.systemPage = ""
+            Behavior on opacity { NumberAnimation { duration: Theme.motion } }
+            Behavior on y { NumberAnimation { duration: Theme.motion; easing.type: Easing.OutCubic } }
         }
         RowLayout {
             anchors {

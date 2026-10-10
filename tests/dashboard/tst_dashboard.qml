@@ -6,7 +6,7 @@ import "../../quickshell/components/dashboard/CalendarMath.js" as CalendarMath
 
 Item {
     width: 1000; height: 700
-    Bar { id: bar; width: 1000; height: 34; timeText: "12:30" }
+    Bar { id: bar; width: 1000; height: 34; timeText: "12:30"; dateText: "Mon, 28 Sep"; onDashboardRequested: dashboardOpen = true }
     CalendarCard { id: calendar; y: 50; width: 350; today: new Date(2024, 1, 29, 12) }
     SignalSpy { id: clockSpy; target: bar; signalName: "dashboardRequested" }
     TestCase {
@@ -18,6 +18,10 @@ Item {
             compare(clockSpy.count, 1);
             keyClick(Qt.Key_Space);
             compare(clockSpy.count, 2);
+            mouseClick(bar, 410, 17); // Date portion of the shared button.
+            compare(clockSpy.count, 3);
+            mouseClick(bar, 466, 17); // Gap between date and time.
+            compare(clockSpy.count, 4);
         }
         function test_leap_year_grid() {
             compare(CalendarMath.cell(2024, 1, 0).getDate(), 29);
@@ -40,6 +44,18 @@ Item {
         }
         function test_date_comparison_includes_year() {
             verify(!CalendarMath.sameDay(new Date(2024, 1, 29), new Date(2028, 1, 29)));
+        }
+        function test_clock_hover_opens_dashboard() {
+            bar.dashboardOpen = false;
+            const target = findChild(bar, "clockDateTimeButton");
+            verify(!!target);
+            mouseMove(bar, 900, 17);
+            mouseMove(bar, 410, 17);
+            tryCompare(target, "hovered", true);
+            tryVerify(function() { return clockSpy.count >= 5; });
+            mouseMove(bar, 410, 17);
+            tryCompare(bar, "dashboardOpen", true);
+            bar.dashboardOpen = false;
         }
     }
 }

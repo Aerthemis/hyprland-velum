@@ -5,19 +5,23 @@ goal is a desktop we can understand and maintain one component at a time.
 
 ## Visual vocabulary
 
-- **Pixel mark:** a two-tone V on a 9×9 grid, with Nerd Font day/night and theme controls.
+- **System mark:** the detected Linux distribution logo from Nerd Font glyphs,
+  with Velum's two-tone 9×9 V as the fallback; Nerd Font [includes Font Logos](https://github.com/ryanoasis/nerd-fonts#glyph-sets).
 - **Iris, Sage, Clay:** three restrained accent options on warm neutral surfaces.
 - **Moonlight and Daybreak:** dark and light palettes with readable text.
 - **Space Grotesk + Google Sans Flex:** distinctive display type, quieter controls.
-- **Compact bar:** 34 px, edge-to-edge, JetBrains Mono Nerd Font labels, left-aligned workspaces
-  with accent underlines and a clock pinned to screen center. Inspired by
-  [Omarchy](https://omarchy.org/manual/the-top-bar/), with Velum’s own mark and palette.
+- **Compact bar:** 34 px, edge-to-edge, JetBrains Mono Nerd Font labels, a
+  detected distribution logo, numbered workspace controls and a clock pinned to screen center. The
+  right edge borrows Omarchy's system-control grouping while keeping Velum's own
+  mark and palette. The clock opens the dashboard; each system icon opens its
+  control panel. Registered tray apps appear as a dynamic icon strip beside the
+  system controls. Reference: [Omarchy's top bar](https://omarchy.org/manual/the-top-bar/).
 - **Rounded panels:** 20–24 px panels, 12 px buttons, thin borders.
 - **Brief motion:** 180 ms transitions for selection, surfaces and panels.
 - **Contour wallpaper:** original curves drawn in QML; no bundled photo or artwork.
 
-The preview deliberately shares its actual bar and appearance components with
-live mode. It can evolve without changing the daily desktop.
+The preview deliberately shares its actual bar, dashboard and system-control
+components with live mode. It can evolve without changing the daily desktop.
 
 ## Architecture
 
@@ -31,7 +35,7 @@ as a separate user-state concern, outside tracked source files.
 ## Next milestones
 
 1. Refine the bar together: spacing, workspace behavior and accent palette.
-2. Add live battery and audio controls, then tray and a keyboard-first launcher.
+2. Add a keyboard-first launcher.
 3. Bring the existing custom Screens backend into this project, with a Velum UI.
 4. Add clipboard history and the clear-all action without importing private data.
 5. Build explicit installation and per-machine configuration for the new laptop.
@@ -54,6 +58,11 @@ Automatic display profiles and the independent Python rollback watchdog should
 remain separate from the shell's visuals. A UI failure must not prevent restoring
 a usable display layout.
 
-Bar controls use Omarchy’s Nerd Font glyph mappings: `󰔎` for day/night and
-`󰸌` for appearance, rendered by JetBrainsMono Nerd Font. The V remains Velum’s
-own mark. Reference: [Omarchy’s menu](https://github.com/omacom/omarchy/blob/v3.0.0/bin/omarchy-menu).
+System controls use Nerd Font glyphs rendered by JetBrains Mono Nerd Font. A
+Python standard-library adapter runs only explicit actions and reads status
+from existing desktop services; absent services leave controls unavailable.
+The network indicator reflects Wi-Fi signal or an Ethernet connection, and its
+panel lists scanned networks. Wi-Fi activation is limited to saved
+NetworkManager profiles, open networks, or protected personal networks after a
+password prompt. Enterprise Wi-Fi needs an existing profile. Brightness and
+power-profile actions depend on machine support and permissions.
